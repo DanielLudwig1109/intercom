@@ -1,7 +1,7 @@
 {
-  "name": "@capacitor-community/intercom",
-  "version": "7.0.3",
-  "description": "Enable Intercom features for Capacitor apps",
+  "name": "@capacitor-aeins/intercom",
+  "version": "7.0.4-a1.1",
+  "description": "Capacitor plugin for intercom",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
@@ -29,7 +29,7 @@
     "contributors:gen": "all-contributors generate",
     "prepare": "npm run build"
   },
-  "author": "Stewan Silva",
+  "author": "AE1NS",
   "license": "MIT",
   "peerDependencies": {
     "@capacitor/core": ">=7.0.0"
@@ -61,7 +61,7 @@
     "android/build.gradle",
     "dist/",
     "ios/Plugin/",
-    "CapacitorCommunityIntercom.podspec"
+    "CapacitorAeinsIntercom.podspec"
   ],
   "keywords": [
     "capacitor",
@@ -80,9 +80,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/capacitor-community/intercom"
-  },
-  "bugs": {
-    "url": "https://github.com/capacitor-community/intercom/issues"
+    "url": "https://dev.azure.com/AE1NS/Capacitor%20Plugins/_git/intercom"
   }
 }
