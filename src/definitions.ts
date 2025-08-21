@@ -24,6 +24,7 @@ export interface IntercomPlugin {
   displayArticle(options: { articleId: string }): Promise<void>;
   addListener(eventName: 'windowDidShow', listenerFunc: () => void): Promise<PluginListenerHandle>;
   addListener(eventName: 'windowDidHide', listenerFunc: () => void): Promise<PluginListenerHandle>;
+  addListener(eventName: 'updateUnreadCount', listenerFunc: (data: { unreadCount: number; }) => void): Promise<PluginListenerHandle>
   removeAllListeners(): Promise<void>;
 }
 
@@ -50,5 +51,6 @@ export interface IntercomUserUpdateOptions {
   name?: string;
   phone?: string;
   languageOverride?: string;
+  company?: { id: string, name: string };
   customAttributes?: { [key: string]: any };
 }

@@ -22,8 +22,10 @@ import io.intercom.android.sdk.IntercomError;
 import io.intercom.android.sdk.IntercomPushManager;
 import io.intercom.android.sdk.IntercomStatusCallback;
 import io.intercom.android.sdk.UserAttributes;
+import io.intercom.android.sdk.Company;
 import io.intercom.android.sdk.identity.Registration;
 import io.intercom.android.sdk.push.IntercomPushClient;
+import io.intercom.android.sdk.UnreadConversationCountListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,6 +38,7 @@ public class IntercomPlugin extends Plugin {
 
     private static final String EVENT_WINDOW_DID_SHOW = "windowDidShow";
     private static final String EVENT_WINDOW_DID_HIDE = "windowDidHide";
+    private static final String EVENT_UNREAD_COUNT_CHANGED = "updateUnreadCount";
 
     private final IntercomPushClient intercomPushClient = new IntercomPushClient();
 
@@ -63,17 +66,17 @@ public class IntercomPlugin extends Plugin {
     public void handleOnStart() {
         super.handleOnStart();
         bridge
-            .getActivity()
-            .runOnUiThread(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        //We also initialize intercom here just in case it has died. If Intercom is already set up, this won't do anything.
-                        setUpIntercom();
-                        Intercom.client().handlePushMessage();
-                    }
-                }
-            );
+                .getActivity()
+                .runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                //We also initialize intercom here just in case it has died. If Intercom is already set up, this won't do anything.
+                                setUpIntercom();
+                                Intercom.client().handlePushMessage();
+                            }
+                        }
+                );
     }
 
     @Override
@@ -133,6 +136,17 @@ public class IntercomPlugin extends Plugin {
         String languageOverride = call.getString("languageOverride");
         if (languageOverride != null && languageOverride.length() > 0) {
             builder.withLanguageOverride(languageOverride);
+        }
+        JSObject companyObject = call.getObject("company");
+        String companyId = "";
+        String companyName = "";
+        if (companyObject != null) {
+            companyId = companyObject.getString("id");
+            companyName = companyObject.getString("name");
+        }
+        if (companyId != null && !companyId.isEmpty() && companyName != null && !companyName.isEmpty()) {
+            Company company = new Company.Builder().withName(companyName).withCompanyId(companyId).build();
+            builder.withCompany(company);
         }
         Map<String, Object> customAttributes = mapFromJSON(call.getObject("customAttributes"));
         builder.withCustomAttributes(customAttributes);
@@ -281,9 +295,21 @@ public class IntercomPlugin extends Plugin {
 
             // init intercom sdk
             Intercom.initialize(this.getActivity().getApplication(), apiKey, appId);
+            setUpUnreadCountListener();
         } catch (Exception e) {
             Logger.error("Intercom", "ERROR: Something went wrong when initializing Intercom. Check your configurations", e);
         }
+    }
+
+    private void setUpUnreadCountListener() {
+        Intercom.client().addUnreadConversationCountListener(new UnreadConversationCountListener() {
+            @Override
+            public void onCountUpdate(int unreadCount) {
+                JSObject result = new JSObject();
+                result.put("unreadCount", unreadCount);
+                notifyListeners(EVENT_UNREAD_COUNT_CHANGED, result);
+            }
+        });
     }
 
     private static Map<String, Object> mapFromJSON(JSObject jsonObject) {

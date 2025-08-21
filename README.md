@@ -135,6 +135,7 @@ Now you should be set to go. Try to run your client using `ionic cap run android
 * [`displayArticle(...)`](#displayarticle)
 * [`addListener('windowDidShow', ...)`](#addlistenerwindowdidshow-)
 * [`addListener('windowDidHide', ...)`](#addlistenerwindowdidhide-)
+* [`addListener('updateUnreadCount', ...)`](#addlistenerupdateunreadcount-)
 * [`removeAllListeners()`](#removealllisteners)
 * [Interfaces](#interfaces)
 
@@ -412,6 +413,22 @@ addListener(eventName: 'windowDidHide', listenerFunc: () => void) => Promise<Plu
 --------------------
 
 
+### addListener('updateUnreadCount', ...)
+
+```typescript
+addListener(eventName: 'updateUnreadCount', listenerFunc: (data: { unreadCount: number; }) => void) => Promise<PluginListenerHandle>
+```
+
+| Param              | Type                                                     |
+| ------------------ | -------------------------------------------------------- |
+| **`eventName`**    | <code>'updateUnreadCount'</code>                         |
+| **`listenerFunc`** | <code>(data: { unreadCount: number; }) =&gt; void</code> |
+
+**Returns:** <code>Promise&lt;<a href="#pluginlistenerhandle">PluginListenerHandle</a>&gt;</code>
+
+--------------------
+
+
 ### removeAllListeners()
 
 ```typescript
@@ -426,14 +443,15 @@ removeAllListeners() => Promise<void>
 
 #### IntercomUserUpdateOptions
 
-| Prop                   | Type                                 |
-| ---------------------- | ------------------------------------ |
-| **`userId`**           | <code>string</code>                  |
-| **`email`**            | <code>string</code>                  |
-| **`name`**             | <code>string</code>                  |
-| **`phone`**            | <code>string</code>                  |
-| **`languageOverride`** | <code>string</code>                  |
-| **`customAttributes`** | <code>{ [key: string]: any; }</code> |
+| Prop                   | Type                                       |
+| ---------------------- | ------------------------------------------ |
+| **`userId`**           | <code>string</code>                        |
+| **`email`**            | <code>string</code>                        |
+| **`name`**             | <code>string</code>                        |
+| **`phone`**            | <code>string</code>                        |
+| **`languageOverride`** | <code>string</code>                        |
+| **`company`**          | <code>{ id: string; name: string; }</code> |
+| **`customAttributes`** | <code>{ [key: string]: any; }</code>       |
 
 
 #### IntercomPushNotificationData

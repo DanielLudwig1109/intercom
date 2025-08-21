@@ -1,6 +1,6 @@
 {
   "name": "@capacitor-aeins/intercom",
-  "version": "7.0.4-a1.1",
+  "version": "7.0.4-a1.30",
   "description": "Capacitor plugin for intercom",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",

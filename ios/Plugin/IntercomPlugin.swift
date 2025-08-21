@@ -20,7 +20,11 @@ public class IntercomPlugin: CAPPlugin {
         #endif
 
         NotificationCenter.default.addObserver(self, selector: #selector(self.didRegisterWithToken(notification:)), name: Notification.Name.capacitorDidRegisterForRemoteNotifications, object: nil)
-
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(self.updateUnreadCount(notification:)),
+                                                   name: NSNotification.Name.IntercomUnreadConversationCountDidChange,
+                                                 object: nil)
+        
         observers.append(
             NotificationCenter.default.addObserver(forName: .IntercomWindowDidShow, object: nil, queue: OperationQueue.main) { [weak self] (_) in
                 self?.notifyListeners("windowDidShow", data: nil)
@@ -29,7 +33,6 @@ public class IntercomPlugin: CAPPlugin {
         observers.append(NotificationCenter.default.addObserver(forName: .IntercomWindowDidHide, object: nil, queue: OperationQueue.main) { [weak self] (_) in
             self?.notifyListeners("windowDidHide", data: nil)
         })
-
     }
 
     deinit {
@@ -44,6 +47,11 @@ public class IntercomPlugin: CAPPlugin {
             return
         }
         Intercom.setDeviceToken(deviceToken)
+    }
+    
+    @objc func updateUnreadCount(notification: NSNotification) {
+        let unreadCount = ["unreadCount": Intercom.unreadConversationCount()]
+        self.notifyListeners("updateUnreadCount", data: unreadCount)
     }
 
     @objc func loadWithKeys(_ call: CAPPluginCall) {
@@ -107,6 +115,19 @@ public class IntercomPlugin: CAPPlugin {
         let languageOverride = call.getString("languageOverride")
         if languageOverride != nil {
             userAttributes.languageOverride = languageOverride
+        }
+        var companyId: String? = nil
+        var companyName: String? = nil
+        if let companyObject = call.getObject("company") {
+            companyId = companyObject["id"] as? String
+            companyName = companyObject["name"] as? String
+        }
+        if let companyId = companyId, !companyId.isEmpty,
+        let companyName = companyName, !companyName.isEmpty {
+            let company = ICMCompany()
+            company.name = companyName
+            company.companyId = companyId
+            userAttributes.companies = [company]
         }
         let customAttributes = call.getObject("customAttributes")
         userAttributes.customAttributes = customAttributes
