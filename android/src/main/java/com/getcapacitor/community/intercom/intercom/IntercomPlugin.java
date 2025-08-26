@@ -40,12 +40,13 @@ public class IntercomPlugin extends Plugin {
     private static final String EVENT_WINDOW_DID_HIDE = "windowDidHide";
     private static final String EVENT_UNREAD_COUNT_CHANGED = "updateUnreadCount";
 
+    private boolean _initIntercom = false;
     private final IntercomPushClient intercomPushClient = new IntercomPushClient();
 
     @Override
     public void load() {
         // Set up Intercom
-        setUpIntercom();
+        setUpIntercom(null, null);
 
         // load parent
         super.load();
@@ -56,7 +57,7 @@ public class IntercomPlugin extends Plugin {
         String appId = call.getString("appId", "NO_APP_ID_PASSED");
         String apiKey = call.getString("apiKeyAndroid", "NO_API_KEY_PASSED");
 
-        Intercom.initialize(this.getActivity().getApplication(), apiKey, appId);
+        setUpIntercom(apiKey, appId);
 
         // load parent
         super.load();
@@ -72,8 +73,12 @@ public class IntercomPlugin extends Plugin {
                             @Override
                             public void run() {
                                 //We also initialize intercom here just in case it has died. If Intercom is already set up, this won't do anything.
-                                setUpIntercom();
-                                Intercom.client().handlePushMessage();
+                                setUpIntercom(null, null);
+
+                                Intercom client = _getIntercomClient();
+                                if (client != null) {
+                                    client.handlePushMessage();
+                                }
                             }
                         }
                 );
@@ -104,13 +109,19 @@ public class IntercomPlugin extends Plugin {
         if (userId != null && userId.length() > 0) {
             registration = registration.withUserId(userId);
         }
-        Intercom.client().registerIdentifiedUser(registration);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.registerIdentifiedUser(registration);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void registerUnidentifiedUser(PluginCall call) {
-        Intercom.client().registerUnidentifiedUser();
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.registerUnidentifiedUser();
+        }
         call.resolve();
     }
 
@@ -150,13 +161,19 @@ public class IntercomPlugin extends Plugin {
         }
         Map<String, Object> customAttributes = mapFromJSON(call.getObject("customAttributes"));
         builder.withCustomAttributes(customAttributes);
-        Intercom.client().updateUser(builder.build());
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.updateUser(builder.build());
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void logout(PluginCall call) {
-        Intercom.client().logout();
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.logout();
+        }
         call.resolve();
     }
 
@@ -165,10 +182,13 @@ public class IntercomPlugin extends Plugin {
         String eventName = call.getString("name");
         Map<String, Object> metaData = mapFromJSON(call.getObject("data"));
 
-        if (metaData == null) {
-            Intercom.client().logEvent(eventName);
-        } else {
-            Intercom.client().logEvent(eventName, metaData);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            if (metaData == null) {
+                client.logEvent(eventName);
+            } else {
+                client.logEvent(eventName, metaData);
+            }
         }
 
         call.resolve();
@@ -176,79 +196,115 @@ public class IntercomPlugin extends Plugin {
 
     @PluginMethod
     public void displayMessenger(PluginCall call) {
-        Intercom.client().displayMessenger();
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.displayMessenger();
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void displayMessageComposer(PluginCall call) {
         String message = call.getString("message");
-        Intercom.client().displayMessageComposer(message);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.displayMessageComposer(message);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void displayHelpCenter(PluginCall call) {
-        Intercom.client().displayHelpCenter();
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.displayHelpCenter();
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void hideMessenger(PluginCall call) {
-        Intercom.client().hideIntercom();
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.hideIntercom();
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void displayLauncher(PluginCall call) {
-        Intercom.client().setLauncherVisibility(Intercom.VISIBLE);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.setLauncherVisibility(Intercom.VISIBLE);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void hideLauncher(PluginCall call) {
-        Intercom.client().setLauncherVisibility(Intercom.GONE);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.setLauncherVisibility(Intercom.GONE);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void displayInAppMessages(PluginCall call) {
-        Intercom.client().setInAppMessageVisibility(Intercom.VISIBLE);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.setLauncherVisibility(Intercom.VISIBLE);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void hideInAppMessages(PluginCall call) {
-        Intercom.client().setLauncherVisibility(Intercom.GONE);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.setLauncherVisibility(Intercom.GONE);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void displayCarousel(PluginCall call) {
         String carouselId = call.getString("carouselId");
-        Intercom.client().displayCarousel(carouselId);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.displayCarousel(carouselId);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void setUserHash(PluginCall call) {
         String hmac = call.getString("hmac");
-        Intercom.client().setUserHash(hmac);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.setUserHash(hmac);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void setUserJwt(PluginCall call) {
         String jwt = call.getString("jwt");
-        Intercom.client().setUserJwt(jwt);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.setUserJwt(jwt);
+        }
         call.resolve();
     }
 
     @PluginMethod
     public void setBottomPadding(PluginCall call) {
-        String stringValue = call.getString("value");
-        int value = Integer.parseInt(stringValue);
-        Intercom.client().setBottomPadding(value);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            String stringValue = call.getString("value");
+            int value = Integer.parseInt(stringValue);
+            client.setBottomPadding(value);
+        }
         call.resolve();
     }
 
@@ -282,16 +338,31 @@ public class IntercomPlugin extends Plugin {
     @PluginMethod
     public void displayArticle(PluginCall call) {
         String articleId = call.getString("articleId");
-        Intercom.client().displayArticle(articleId);
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.displayArticle(articleId);
+        }
         call.resolve();
     }
 
-    private void setUpIntercom() {
+    private void setUpIntercom(String loadApiKey, String loadAppId) {
+         if (this._initIntercom) {
+            return;
+        }
+
         try {
             // get config
             CapConfig config = this.bridge.getConfig();
-            String apiKey = config.getPluginConfiguration("Intercom").getString("androidApiKey");
-            String appId = config.getPluginConfiguration("Intercom").getString("androidAppId");
+            String apiKey = (loadApiKey != null) ? loadApiKey : config.getPluginConfiguration("Intercom").getString("androidApiKey");
+            String appId = (loadAppId != null) ? loadAppId : config.getPluginConfiguration("Intercom").getString("androidAppId");
+
+            if (apiKey == null || apiKey.isEmpty() || appId == null || appId.isEmpty()) {
+                Logger.warn("Intercom", "ERROR: Missing Intercom API key or App ID");
+                this._initIntercom = false;
+                return;
+            }
+
+            this._initIntercom = true;
 
             // init intercom sdk
             Intercom.initialize(this.getActivity().getApplication(), apiKey, appId);
@@ -302,14 +373,17 @@ public class IntercomPlugin extends Plugin {
     }
 
     private void setUpUnreadCountListener() {
-        Intercom.client().addUnreadConversationCountListener(new UnreadConversationCountListener() {
-            @Override
-            public void onCountUpdate(int unreadCount) {
-                JSObject result = new JSObject();
-                result.put("unreadCount", unreadCount);
-                notifyListeners(EVENT_UNREAD_COUNT_CHANGED, result);
-            }
-        });
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.addUnreadConversationCountListener(new UnreadConversationCountListener() {
+                @Override
+                public void onCountUpdate(int unreadCount) {
+                    JSObject result = new JSObject();
+                    result.put("unreadCount", unreadCount);
+                    notifyListeners(EVENT_UNREAD_COUNT_CHANGED, result);
+                }
+            });
+        }
     }
 
     private static Map<String, Object> mapFromJSON(JSObject jsonObject) {
@@ -346,5 +420,9 @@ public class IntercomPlugin extends Plugin {
             }
         }
         return list;
+    }
+
+    private Intercom _getIntercomClient() {
+        return this._initIntercom ? Intercom.client() : null;
     }
 }
