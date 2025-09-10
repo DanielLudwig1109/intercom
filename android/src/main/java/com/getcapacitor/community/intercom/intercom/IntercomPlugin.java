@@ -42,6 +42,14 @@ public class IntercomPlugin extends Plugin {
 
     private boolean _initIntercom = false;
     private final IntercomPushClient intercomPushClient = new IntercomPushClient();
+    private final UnreadConversationCountListener unreadCountListener = new UnreadConversationCountListener() {
+        @Override
+        public void onCountUpdate(int unreadCount) {
+            JSObject result = new JSObject();
+            result.put("unreadCount", unreadCount);
+            notifyListeners(EVENT_UNREAD_COUNT_CHANGED, result);
+        }
+    };
 
     @Override
     public void load() {
@@ -172,6 +180,7 @@ public class IntercomPlugin extends Plugin {
     public void logout(PluginCall call) {
         Intercom client = _getIntercomClient();
         if (client != null) {
+            removeUnreadCountListener();
             client.logout();
         }
         call.resolve();
@@ -346,10 +355,6 @@ public class IntercomPlugin extends Plugin {
     }
 
     private void setUpIntercom(String loadApiKey, String loadAppId) {
-         if (this._initIntercom) {
-            return;
-        }
-
         try {
             // get config
             CapConfig config = this.bridge.getConfig();
@@ -358,31 +363,32 @@ public class IntercomPlugin extends Plugin {
 
             if (apiKey == null || apiKey.isEmpty() || appId == null || appId.isEmpty()) {
                 Logger.warn("Intercom", "ERROR: Missing Intercom API key or App ID");
-                this._initIntercom = false;
+                _initIntercom = false;
                 return;
             }
 
-            this._initIntercom = true;
+            _initIntercom = true;
 
             // init intercom sdk
             Intercom.initialize(this.getActivity().getApplication(), apiKey, appId);
             setUpUnreadCountListener();
         } catch (Exception e) {
             Logger.error("Intercom", "ERROR: Something went wrong when initializing Intercom. Check your configurations", e);
+            removeUnreadCountListener();
         }
     }
 
     private void setUpUnreadCountListener() {
         Intercom client = _getIntercomClient();
         if (client != null) {
-            client.addUnreadConversationCountListener(new UnreadConversationCountListener() {
-                @Override
-                public void onCountUpdate(int unreadCount) {
-                    JSObject result = new JSObject();
-                    result.put("unreadCount", unreadCount);
-                    notifyListeners(EVENT_UNREAD_COUNT_CHANGED, result);
-                }
-            });
+            client.addUnreadConversationCountListener(unreadCountListener);
+        }
+    }
+
+    private void removeUnreadCountListener() {
+        Intercom client = _getIntercomClient();
+        if (client != null) {
+            client.removeUnreadConversationCountListener(unreadCountListener);
         }
     }
 
@@ -423,6 +429,16 @@ public class IntercomPlugin extends Plugin {
     }
 
     private Intercom _getIntercomClient() {
-        return this._initIntercom ? Intercom.client() : null;
+        if (_initIntercom) {
+            try {
+                return Intercom.client();
+            } catch (Exception e) {
+                Logger.error("Intercom", "Intercom client not ready yet.", e);
+                return null;
+            }
+        }
+
+        removeUnreadCountListener();
+        return null;
     }
 }
